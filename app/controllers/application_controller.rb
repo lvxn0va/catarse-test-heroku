@@ -102,6 +102,6 @@ class ApplicationController < ActionController::Base
   end
 
   def force_http
-    redirect_to(protocol: 'http', host: ::Configuration[:base_domain]) if request.ssl?
+    redirect_to(protocol: 'http', host: ::Configuration[:base_domain], :only_path => "true") if request.ssl?
   end
 end
