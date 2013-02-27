@@ -145,6 +145,11 @@ class User < ActiveRecord::Base
 
   def self.find_for_google_oauth(auth, signed_in_resource=nil)
     user = User.find_for_oauth_uid(auth) || User.find_for_oauth_mail(auth)
+    User.
+      select('users.*').
+      joins('JOIN authorizations ON authorizations.user_id = users.id').
+      joins('JOIN oauth_providers ON oauth_providers.id = authorizations.oauth_provider_id').
+      where("authorizations.uid = ? AND oauth_providers.name = 'google_oauth2'", auth[:uid]).first
     user ||= User.create(
                          name: auth.info.name,
                          provider: auth.provider,
@@ -152,11 +157,6 @@ class User < ActiveRecord::Base
                          email: auth.info.email,
                          password: Devise.friendly_token[0,20]
                          )
-    User.
-      select('users.*').
-      joins('JOIN authorizations ON authorizations.user_id = users.id').
-      joins('JOIN oauth_providers ON oauth_providers.id = authorizations.oauth_provider_id').
-      where("authorizations.uid = ? AND oauth_providers.name = 'google_oauth2'", auth[:uid]).first
   end
 
   def self.find_for_oauth_uid(auth)
