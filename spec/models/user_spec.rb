@@ -159,8 +159,8 @@ describe User do
     before{ oauth_provider }
     subject{ created_user }
     # Provider and uid should be nil because we have transfered them to authorization model
-    its(:provider){ should be_nil }
-    its(:uid){ should be_nil }
+    its(:provider){ should == auth['provider'] }
+    its(:uid){ should == auth['uid'] }
     its(:email){ should == auth['info']['email'] }
     its(:name){ should == auth['info']['name'] }
     its(:nickname){ should == auth['info']['nickname'] }

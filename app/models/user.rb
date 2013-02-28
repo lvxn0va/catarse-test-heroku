@@ -133,7 +133,7 @@ class User < ActiveRecord::Base
         user.password = Devise.friendly_token[0,20]
     
 
-        if auth["provider"] == "google_oauth2"
+        if auth['provider'] == "google_oauth2"
           user.image_url = (auth["extra"]["raw_info"]["picture"] rescue nil)
         end
 
@@ -174,13 +174,13 @@ class User < ActiveRecord::Base
   end
 
   def self.find_for_oauth_uid(auth)
-    User.where(provider: auth.provider, uid: auth.uid).first
+    User.where(provider: auth['provider'], uid: auth['uid']).first
   end
 
   def self.find_for_oauth_mail(auth)
-    user = User.where(email: auth.info.email).first
+    user = User.where(email: auth['info']['email']).first
     if user
-      user.update_attributes(provider: auth.provider, uid: auth.uid)
+      user.update_attributes(provider: auth['provider'], uid: auth['uid'])
       user.save
     end
     user
