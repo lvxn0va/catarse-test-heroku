@@ -116,26 +116,40 @@ class User < ActiveRecord::Base
   end
 
   def self.create_with_omniauth(auth)
-    u = create! do |user|
-      user.name = auth["info"]["name"]
-      user.email = (auth["info"]["email"] rescue nil)
-      user.email = (auth["extra"]["user_hash"]["email"] rescue nil) unless user.email
-      user.nickname = auth["info"]["nickname"]
-      user.bio = (auth["info"]["description"][0..139] rescue nil)
-      user.locale = I18n.locale.to_s
+    u = User.find_for_oauth_uid(auth) || User.find_for_oauth_mail(auth)
+    
+    if u = User.where(:email => auth["info"]["email"]).first
+      return u
+    else
+      u ||= create! do |user|
+        user.uid = auth["uid"]
+        user.provider = auth["provider"]
+        user.name = auth["info"]["name"]
+        user.email = (auth["info"]["email"] rescue nil)
+        user.email = (auth["extra"]["user_hash"]["email"] rescue nil) unless user.email
+        user.nickname = auth["info"]["nickname"]
+        user.bio = (auth["info"]["description"][0..139] rescue nil)
+        user.locale = (auth["extra"]["raw_info"]["locale"] rescue nil) || I18n.locale.to_s
+        user.password = Devise.friendly_token[0,20]
+    
 
-      if auth["provider"] == "twitter"
-        user.image_url = "https://api.twitter.com/1/users/profile_image?screen_name=#{auth['info']['nickname']}&size=original"
-      end
+        if auth["provider"] == "google_oauth2"
+          user.image_url = (auth["extra"]["raw_info"]["picture"] rescue nil)
+        end
 
-      if auth["provider"] == "facebook"
-        user.image_url = "https://graph.facebook.com/#{auth['uid']}/picture?type=large"
-      end
+        if auth["provider"] == "twitter"
+          user.image_url = "https://api.twitter.com/1/users/profile_image?screen_name=#{auth['info']['nickname']}&size=original"
+        end
 
-      if auth["provider"] == "stripe_connect"
-        user.stripe_key = auth["info"]["stripe_publishable_key"]
-        user.stripe_userid = auth["uid"]
-        user.stripe_access_token = auth["credentials"]["token"]
+        if auth["provider"] == "facebook"
+          user.image_url = "https://graph.facebook.com/#{auth['uid']}/picture?type=large"
+        end
+
+        if auth["provider"] == "stripe_connect"
+          user.stripe_key = auth["info"]["stripe_publishable_key"]
+          user.stripe_userid = auth["uid"]
+          user.stripe_access_token = auth["credentials"]["token"]
+        end
       end
     end
     provider = OauthProvider.where(name: auth['provider']).first

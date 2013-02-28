@@ -22,9 +22,9 @@ class OmniauthCallbacksController < Devise::OmniauthCallbacksController
 
   def google_oauth2
   omniauth = request.env['omniauth.auth']
-  @user = User.find_for_google_oauth(request.env["omniauth.auth"], current_user)
+  @user = User.create_with_omniauth(request.env["omniauth.auth"])
   if @user && @user.persisted?
-    flash[:notice] = I18n.t("devise.omniauth_callbacks.success", :kind => "Google")
+    flash[:notice] = I18n.t("devise.omniauth_callbacks.success", :kind => "Google", :user => @user.email)
     sign_in @user, :event => :authentication #this will throw if @user is not activated
     redirect_to(session[:return_to] || root_path)
     session[:return_to] = nil 
